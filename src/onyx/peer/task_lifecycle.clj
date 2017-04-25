@@ -290,7 +290,7 @@
     (if (empty? remaining-pubs)
       (advance state)
       (do
-       (Thread/sleep 200)
+       (Thread/sleep (rand-int 600))
        (set-context! state (assoc context :publishers remaining-pubs))))))
 
 (defn barrier-status-opts [state]

@@ -17,13 +17,21 @@
 (def coordinator (byte 0))
 (def peer (byte 1))
 
+(defn decoder->dst-peer-id [decoder]
+  (if (= coordinator (heartbeat-decoder/get-dst-peer-type decoder))
+    [:coordinator (heartbeat-decoder/get-dst-peer-id decoder)]
+    (heartbeat-decoder/get-dst-peer-id decoder)))
+
+(defn wrap-other [^UnsafeBuffer buf offset]
+  (let [decoder (base-decoder/wrap (base-decoder/->Decoder nil offset) buf offset)]
+    (-> (heartbeat-decoder/->Decoder nil nil)
+        (heartbeat-decoder/wrap buf (+ offset (base-decoder/length decoder))))))
+
 (defn deserialize [^UnsafeBuffer buf offset]
   (let [decoder (base-decoder/wrap (base-decoder/->Decoder nil offset) buf offset)
         hb-dec (-> (heartbeat-decoder/->Decoder nil nil)
                    (heartbeat-decoder/wrap buf (+ offset (base-decoder/length decoder))))
-        dst-peer-id (if (= coordinator (heartbeat-decoder/get-dst-peer-type hb-dec))
-                      [:coordinator (heartbeat-decoder/get-dst-peer-id hb-dec)]
-                      (heartbeat-decoder/get-dst-peer-id hb-dec))]
+        dst-peer-id (decoder->dst-peer-id hb-dec)]
     (merge {:type (base-decoder/get-type decoder)
             :replica-version (base-decoder/get-replica-version decoder)
             :short-id (base-decoder/get-dest-id decoder)
