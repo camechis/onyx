@@ -101,14 +101,15 @@
     this)
   FragmentHandler
   (onFragment [this buffer offset length header]
-    (let [base-dec (base-decoder/->Decoder buffer offset)
+    (let [message (sz/deserialize buffer offset)
+          base-dec (base-decoder/->Decoder buffer offset)
           msg-type (base-decoder/get-type base-dec)
           msg-rv (base-decoder/get-replica-version base-dec)
           ;; TODO, avoid full deserialization until we've determined that the message
           ;; is for us. See below.
-          message (sz/deserialize buffer 
-                                  (+ offset (base-decoder/length base-dec)) 
-                                  (base-decoder/get-payload-length base-dec))
+          ; message (sz/deserialize buffer 
+          ;                         (+ offset (base-decoder/length base-dec)) 
+          ;                         (base-decoder/get-payload-length base-dec))
           msg-sess (:session-id message)]
       (when (and (= session-id msg-sess) 
                  (= replica-version msg-rv))

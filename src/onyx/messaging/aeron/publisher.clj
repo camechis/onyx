@@ -55,7 +55,7 @@
     (assert new-replica-version)
     (set! replica-version new-replica-version)
     (-> base-encoder
-        (base-encoder/set-type sz/message-id)
+        (base-encoder/set-type onyx.types/message-id)
         (base-encoder/set-replica-version new-replica-version)
         (base-encoder/set-dest-id short-id))
     (endpoint-status/set-replica-version! status-mon new-replica-version)
@@ -107,8 +107,9 @@
     (endpoint-status/statuses status-mon))
   (offer-ready! [this]
     (let [msg (ready replica-version src-peer-id short-id)
-          buf (sz/serialize msg)
-          ret (.offer ^Publication publication buf 0 (.capacity buf))]
+          buf (UnsafeBuffer. (byte-array 500))
+          len (sz/serialize buf 0 msg)
+          ret (.offer ^Publication publication buf 0 len)]
       (debug "Offered ready message:" [ret msg :session-id (.sessionId publication) :site site])
       ret))
   (segment-encoder [this]
@@ -116,9 +117,11 @@
   (base-encoder [this]
     base-encoder)
   (offer-heartbeat! [this]
-    (let [msg (heartbeat replica-version epoch src-peer-id :any (.sessionId publication) short-id)
-          buf (sz/serialize msg)
-          ret (.offer ^Publication publication buf 0 (.capacity buf))] 
+    (let [any-dest-id (java.util.UUID. 0 0)
+          msg (heartbeat replica-version epoch src-peer-id any-dest-id (.sessionId publication) short-id)
+          buf (UnsafeBuffer. (byte-array 500))
+          len (sz/serialize buf 0 msg)
+          ret (.offer ^Publication publication buf 0 len)] 
       (debug "Pub offer heartbeat" (autil/channel (:address site) (:port site)) ret msg)
       ret))
   (poll-heartbeats! [this]

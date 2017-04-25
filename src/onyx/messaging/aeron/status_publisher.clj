@@ -87,16 +87,18 @@
       (let [barrier-aligned (merge (t/heartbeat replica-version epoch peer-id
                                                 dst-peer-id session-id short-id) 
                                    opts)
-            buf (sz/serialize barrier-aligned)
-            ret (.offer ^Publication pub buf 0 (.capacity buf))]
+            buf (UnsafeBuffer. (byte-array 500))
+            len (sz/serialize buf 0 barrier-aligned)
+            ret (.offer ^Publication pub buf 0 len)]
         (debug "Offered barrier status message:" 
                [ret barrier-aligned :session-id (.sessionId pub) :dst-site site])
         ret) 
       UNALIGNED_SUBSCRIBER))
   (offer-ready-reply! [this replica-version epoch]
     (let [ready-reply (t/ready-reply replica-version peer-id dst-peer-id session-id short-id) 
-          buf (sz/serialize ready-reply)
-          ret (.offer ^Publication pub buf 0 (.capacity buf))] 
+          buf (UnsafeBuffer. (byte-array 500))
+          len (sz/serialize buf 0 ready-reply)
+          ret (.offer ^Publication pub buf 0 len)] 
       (debug "Offer ready reply!:" [ret ready-reply :session-id (.sessionId pub) :dst-site site])
       ret)))
 

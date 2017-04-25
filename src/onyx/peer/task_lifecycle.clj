@@ -289,7 +289,9 @@
         remaining-pubs (sequence offer-xf publishers)]
     (if (empty? remaining-pubs)
       (advance state)
-      (set-context! state (assoc context :publishers remaining-pubs)))))
+      (do
+       (Thread/sleep 200)
+       (set-context! state (assoc context :publishers remaining-pubs))))))
 
 (defn barrier-status-opts [state]
   (let [status (merged-statuses state)]

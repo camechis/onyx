@@ -8,7 +8,7 @@
             [onyx.messaging.serializers.base-decoder :as base-decoder])
   (:import [org.agrona.concurrent UnsafeBuffer]))
 
-(deftest test-segments-encoding 
+#_(deftest test-segments-encoding 
   (let [buf (UnsafeBuffer. (byte-array 100000))
         enc (-> (segment-encoder/->Encoder buf nil nil)
                 (segment-encoder/wrap 0))
@@ -23,7 +23,7 @@
     (segment-decoder/read-segments! decoder vs messaging-decompress)
     (is (= segments (persistent! vs)))))
 
-(deftest test-base-encoding 
+#_(deftest test-base-encoding 
   (let [buf (UnsafeBuffer. (byte-array 100000))
         type 0
         replica-version 99
@@ -41,7 +41,7 @@
     (is (= (base-decoder/get-dest-id decoder) dest-id))
     (is (= (base-decoder/get-payload-length decoder) payload-length))))
 
-(deftest non-segment-encoding 
+#_(deftest non-segment-encoding 
   (let [msg (sz/barrier 33 44 989)
         buf (sz/serialize msg)
         start-offset 0 
@@ -50,7 +50,7 @@
                                (+ start-offset (base-decoder/length decoder)) 
                                (base-decoder/get-payload-length decoder))))))
 
-(deftest segment-base 
+#_(deftest segment-base 
   (let [msg (sz/barrier 33 44 989)
         buf (sz/serialize msg)
         start-offset 0 

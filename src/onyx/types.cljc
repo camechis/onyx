@@ -12,15 +12,25 @@
   {:type message-id :replica-version replica-version :short-id short-id :payload payload})
 
 (defn barrier [replica-version epoch short-id]
-  {:type barrier-id :replica-version replica-version :epoch epoch :short-id short-id})
+  {:type barrier-id :replica-version replica-version :epoch epoch :short-id short-id 
+   ;; unused, hack.
+   :dst-peer-id (java.util.UUID/randomUUID)
+   :session-id -111111})
 
 ;; should be able to get rid of src-peer-id via short-id
 (defn ready [replica-version src-peer-id short-id]
-  {:type ready-id :replica-version replica-version :src-peer-id src-peer-id :short-id short-id})
+  {:type ready-id :replica-version replica-version :src-peer-id src-peer-id :short-id short-id
+   :epoch -11111 :session-id -1111
+   :dst-peer-id (java.util.UUID/randomUUID)
+   
+   })
 
 (defn ready-reply [replica-version src-peer-id dst-peer-id session-id short-id]
   {:type ready-reply-id :replica-version replica-version :src-peer-id src-peer-id 
-   :dst-peer-id dst-peer-id :session-id session-id :short-id short-id})
+   :dst-peer-id dst-peer-id :session-id session-id :short-id short-id
+   :epoch -11111
+   
+   })
 
 (defn heartbeat [replica-version epoch src-peer-id dst-peer-id session-id short-id]
   {:type heartbeat-id :replica-version replica-version :epoch epoch 

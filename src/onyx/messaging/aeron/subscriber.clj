@@ -64,12 +64,6 @@
     (onAvailableImage [this image] 
       (debug "Available network image" (.position image) (.sessionId image) sub-info))))
 
-
-(defn control-message [buffer decoder]
-  (sz/deserialize buffer 
-                  (+ (base-decoder/offset decoder) (base-decoder/length decoder)) 
-                  (base-decoder/get-payload-length decoder)))
-
 (deftype Subscriber 
   [peer-id ticket-counters peer-config dst-task-id slot-id site batch-size ^AtomicLong read-bytes 
    ^AtomicLong errors error ^bytes bs channel ^Aeron conn ^Subscription subscription lost-sessions
@@ -253,7 +247,7 @@
                           ControlledFragmentHandler$Action/ABORT)]
                 (debug [:read-subscriber (action->kw ret) channel dst-task-id])
                 ret)
-              (let [message (control-message buffer base-dec)
+              (let [message (sz/deserialize buffer offset)
                     ret (cond (nil? spub)
                               ControlledFragmentHandler$Action/CONTINUE
                               (= msg-type sz/barrier-id)
