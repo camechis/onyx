@@ -107,16 +107,15 @@
           hb-dec (sz/wrap-other buffer offset)]
       (when (and (= session-id (heartbeat-decoder/get-session-id hb-dec)) 
                  (= replica-version (base-decoder/get-replica-version base-dec)))
-        (let [dst-peer-id (sz/decoder->dst-peer-id hb-dec)
-              msg-type (base-decoder/get-type base-dec)
-              ] 
+        ;; REMOVE GET FROM DECODER CALLS
+        (let [dst-peer-id (sz/uncoerce-peer-id (heartbeat-decoder/get-dst-peer-id hb-dec))
+              msg-type (base-decoder/get-type base-dec)] 
           (cond (= msg-type 2) 
                 (when (= peer-id dst-peer-id)
                   (let [message (sz/deserialize buffer offset)
-                        src-peer-id (heartbeat-decoder/get-src-peer-id hb-dec)
+                        src-peer-id (sz/uncoerce-peer-id (heartbeat-decoder/get-src-peer-id hb-dec))
                         _ (println "SRCPER" src-peer-id)
-                        epoch #_(heartbeat-decoder/get-epoch hb-dec)
-                        (:epoch message)
+                        epoch (:epoch message)
                         _ (println "EPOCH" epoch)
                         peer-status (or (get statuses src-peer-id) 
                                         (throw (Exception. "Heartbeating peer does not exist for this replica-version.")))
@@ -143,7 +142,7 @@
                 (= msg-type 4)
                 (when (= peer-id dst-peer-id)
                   (let [message (sz/deserialize buffer offset)
-                        src-peer-id (heartbeat-decoder/get-src-peer-id hb-dec)] 
+                        src-peer-id (sz/uncoerce-peer-id (heartbeat-decoder/get-src-peer-id hb-dec))] 
                     (->> (update statuses src-peer-id merge {:ready? true 
                                                              :heartbeat (System/nanoTime)}) 
                          (set! statuses))

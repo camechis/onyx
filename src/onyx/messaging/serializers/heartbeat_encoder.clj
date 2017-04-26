@@ -7,7 +7,6 @@
 
 (defprotocol PEncoder
   (set-epoch [this epoch])
-  (set-dst-peer-type [this peer-id])
   (set-dst-peer-id [this peer-id])
   (set-src-peer-id [this peer-id])
   (set-session-id [this session-id])
@@ -16,54 +15,42 @@
   (length [this])
   (wrap [this offset]))
 
+(def coordinator (byte 0))
+(def peer (byte 1))
+
+(defn type->byte [v] 
+  (get {:coordinator coordinator
+        :task peer}
+       v))
+
 (deftype Encoder [^UnsafeBuffer buffer ^:unsynchronized-mutable offset]
   PEncoder
   (set-epoch [this epoch]
     (.putLong buffer offset (long epoch))
     this)
-  (set-src-peer-id [this src-peer-id]
-    (.putLong buffer (unchecked-add-int offset 8) (.getMostSignificantBits ^java.util.UUID src-peer-id))
-    (.putLong buffer (unchecked-add-int offset 16) (.getLeastSignificantBits ^java.util.UUID src-peer-id))
+  (set-src-peer-id [this [peer-type peer-id]]
+    (assert offset)
+    (assert peer-type)
+    (assert peer-id)
+    (.putByte buffer (unchecked-add-int offset 8) (type->byte peer-type))
+    (.putLong buffer (unchecked-add-int offset 9) (.getMostSignificantBits ^java.util.UUID peer-id))
+    (.putLong buffer (unchecked-add-int offset 17) (.getLeastSignificantBits ^java.util.UUID peer-id))
     this)
-  (set-dst-peer-type [this type]
-    (.putByte buffer (unchecked-add-int offset 24) (byte type))
-    this)
-  (set-dst-peer-id [this peer-id]
-    (.putLong buffer (unchecked-add-int offset 25) (.getMostSignificantBits ^java.util.UUID peer-id))
-    (.putLong buffer (unchecked-add-int offset 33) (.getLeastSignificantBits ^java.util.UUID peer-id))
+  (set-dst-peer-id [this [peer-type peer-id]]
+    (.putByte buffer (unchecked-add-int offset 25) (type->byte peer-type))
+    (.putLong buffer (unchecked-add-int offset 26) (.getMostSignificantBits ^java.util.UUID peer-id))
+    (.putLong buffer (unchecked-add-int offset 34) (.getLeastSignificantBits ^java.util.UUID peer-id))
     this)
   (set-session-id [this session-id]
-    (.putLong buffer (unchecked-add-int offset 41) (long session-id))
+    (.putLong buffer (unchecked-add-int offset 42) (long session-id))
     this)
   (set-opts-map-bytes [this bs]
-    (.putShort buffer (unchecked-add-int offset 49) (short (alength ^bytes bs)))
-    (.putBytes buffer (unchecked-add-int offset 51) ^bytes bs))
+    (.putShort buffer (unchecked-add-int offset 50) (short (alength ^bytes bs)))
+    (.putBytes buffer (unchecked-add-int offset 52) ^bytes bs))
   (offset [this] offset)
   (length [this] 
-    (unchecked-add-int 51 (.getShort buffer (unchecked-add-int offset 49))))
+    (unchecked-add-int 52 (.getShort buffer (unchecked-add-int offset 50))))
   (wrap [this new-offset] 
     (set! offset new-offset)
-    (.putShort buffer (unchecked-add-int new-offset 49) (short 0))
+    (.putShort buffer (unchecked-add-int new-offset 50) (short 0))
     this))
-
-(comment
- (def buf (UnsafeBuffer. (byte-array 2000)))
-
- (def uuid (java.util.UUID/randomUUID))
- (def enced (-> (->Encoder buf 0)
-                (wrap 0)
-                (set-epoch 33)
-                (set-dst-peer-id uuid)
-                (set-session-id 88888)
-                (set-opts-map-bytes (messaging-compress {:a 3}))))
-
- ;#uuid "5f857339-c5ca-40d6-bc6a-175351121cc2"
-
- (-> (onyx.messaging.serializers.heartbeat-decoder/->Decoder buf 0)
-     (onyx.messaging.serializers.heartbeat-decoder/wrap buf 0)
-     ;(onyx.messaging.serializers.heartbeat-decoder/get-dst-peer-id)
-     ;(onyx.messaging.serializers.heartbeat-decoder/get-epoch)
-     (onyx.messaging.serializers.heartbeat-decoder/get-opts-map-bytes)
-     (messaging-decompress)
-
-     ))
