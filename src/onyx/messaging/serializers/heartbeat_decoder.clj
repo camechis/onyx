@@ -10,9 +10,6 @@
   (get-opts-map-bytes [this])
   (wrap [this ^UnsafeBuffer buffer offset]))
 
-(def coordinator (byte 0))
-(def peer (byte 1))
-
 (deftype Decoder [^:unsynchronized-mutable ^UnsafeBuffer buffer
                   ^:unsynchronized-mutable offset]
   PDecoder

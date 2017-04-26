@@ -25,13 +25,15 @@
 
 (defn input-publications [{:keys [peer-sites message-short-ids] :as replica} peer-id job-id]
   (let [allocations (get-in replica [:allocations job-id])
-        input-tasks (get-in replica [:input-tasks job-id])]
+        input-tasks (get-in replica [:input-tasks job-id])
+        coordinator-peer-id [:coordinator peer-id]]
     (->> input-tasks
          (mapcat (fn [task]
                    (->> (get allocations task)
-                        (group-by (fn [src-peer] (get peer-sites src-peer)))
+                        (group-by (fn [input-peer]
+                                    (get peer-sites input-peer)))
                         (map (fn [[site colocated-peers]]
-                               {:src-peer-id [:coordinator peer-id]
+                               {:src-peer-id coordinator-peer-id
                                 :dst-task-id [job-id task]
                                 :dst-peer-ids (set colocated-peers)
                                 :short-id (get message-short-ids
@@ -62,8 +64,8 @@
       (if (empty? new-remaining)
         (update state :barrier merge {:remaining nil
                                       :offering? false})
-        ;; park and retry
-        (do (LockSupport/parkNanos (ms->ns coordinator-backoff-ms))
+        (do ;; park and retry
+            (LockSupport/parkNanos (ms->ns coordinator-backoff-ms))
             (update state :barrier merge {:remaining new-remaining}))))
     state))
 

@@ -16,6 +16,7 @@
   (let [task-map (planning/find-task catalog task)
         this-task-id (:onyx.core/task-id event)
         egress-pubs (->> message-short-ids
+                         ;; hacky workaround to strip coordinator pubs
                          (remove (fn [[{:keys [src-peer-type]} _]]
                                    (= :coordinator src-peer-type)))
                          (filter (fn [[{:keys [src-peer-id]} _]]
@@ -36,11 +37,10 @@
                          (map (fn [[[site dst-task-id slot-id short-id] dsts]] 
                                 {:site site
                                  :short-id short-id
-                                 :src-peer-id [:peer id]
+                                 :src-peer-id id
                                  :dst-task-id [job-id dst-task-id]
                                  :slot-id slot-id
-                                 :dst-peer-ids (set (map (fn [v] [:peer (:dst-peer-id v)]) 
-                                                         dsts))}))
+                                 :dst-peer-ids (set (map :dst-peer-id dsts))}))
                          set)
         sources-peers (filter (fn [[k _]]
                                 (and (= job-id (:job-id k))
@@ -51,10 +51,14 @@
                                        :dst-task-id [job-id this-task-id]
                                        :short-id short-id
                                        :slot-id (common/messenger-slot-id replica job-id this-task-id id)
-                                       :src-peer-id [(:src-peer-type k) (:src-peer-id k)]})
+                                       ;; Hacky manual workaround for coordinator
+                                       :src-peer-id (if (= :coordinator (:src-peer-type k)) 
+                                                      [:coordinator (:src-peer-id k)]
+                                                      (:src-peer-id k))})
                                     sources-peers)
                      :batch-size (:onyx/batch-size task-map)
                      :job-id job-id
+                     ;; move dst task id to only task-id
                      :dst-task-id [job-id this-task-id]
                      :site (peer-sites id)
                      :slot-id (common/messenger-slot-id replica job-id this-task-id id)}]

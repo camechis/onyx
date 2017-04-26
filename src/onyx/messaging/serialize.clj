@@ -17,7 +17,7 @@
 (def coordinator (byte 0))
 (def peer (byte 1))
 
-(defn decoder->src-peer-id [decoder]
+(defn decoder->dst-peer-id [decoder]
   (if (= coordinator (heartbeat-decoder/get-dst-peer-type decoder))
     [:coordinator (heartbeat-decoder/get-dst-peer-id decoder)]
     (heartbeat-decoder/get-dst-peer-id decoder)))
