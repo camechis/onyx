@@ -9,37 +9,41 @@
   (set-epoch [this epoch])
   (set-dst-peer-type [this peer-id])
   (set-dst-peer-id [this peer-id])
+  (set-src-peer-id [this peer-id])
   (set-session-id [this session-id])
   (set-opts-map-bytes [this bs])
   (offset [this])
   (length [this])
   (wrap [this offset]))
 
-
 (deftype Encoder [^UnsafeBuffer buffer ^:unsynchronized-mutable offset]
   PEncoder
   (set-epoch [this epoch]
     (.putLong buffer offset (long epoch))
     this)
+  (set-src-peer-id [this src-peer-id]
+    (.putLong buffer (unchecked-add-int offset 8) (.getMostSignificantBits ^java.util.UUID src-peer-id))
+    (.putLong buffer (unchecked-add-int offset 16) (.getLeastSignificantBits ^java.util.UUID src-peer-id))
+    this)
   (set-dst-peer-type [this type]
-    (.putByte buffer (unchecked-add-int offset 8) (byte type))
+    (.putByte buffer (unchecked-add-int offset 24) (byte type))
     this)
   (set-dst-peer-id [this peer-id]
-    (.putLong buffer (unchecked-add-int offset 9) (.getMostSignificantBits ^java.util.UUID peer-id))
-    (.putLong buffer (unchecked-add-int offset 17) (.getLeastSignificantBits ^java.util.UUID peer-id))
+    (.putLong buffer (unchecked-add-int offset 25) (.getMostSignificantBits ^java.util.UUID peer-id))
+    (.putLong buffer (unchecked-add-int offset 33) (.getLeastSignificantBits ^java.util.UUID peer-id))
     this)
   (set-session-id [this session-id]
-    (.putLong buffer (unchecked-add-int offset 25) (long session-id))
+    (.putLong buffer (unchecked-add-int offset 41) (long session-id))
     this)
   (set-opts-map-bytes [this bs]
-    (.putShort buffer (unchecked-add-int offset 33) (short (alength ^bytes bs)))
-    (.putBytes buffer (unchecked-add-int offset 35) ^bytes bs))
+    (.putShort buffer (unchecked-add-int offset 49) (short (alength ^bytes bs)))
+    (.putBytes buffer (unchecked-add-int offset 51) ^bytes bs))
   (offset [this] offset)
   (length [this] 
-    (unchecked-add-int 35 (.getShort buffer (unchecked-add-int offset 33))))
+    (unchecked-add-int 51 (.getShort buffer (unchecked-add-int offset 49))))
   (wrap [this new-offset] 
     (set! offset new-offset)
-    (.putShort buffer (unchecked-add-int new-offset 33) (short 0))
+    (.putShort buffer (unchecked-add-int new-offset 49) (short 0))
     this))
 
 (comment

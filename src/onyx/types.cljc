@@ -8,6 +8,8 @@
 (def ready-id (byte 3))
 (def ready-reply-id (byte 4))
 
+(def max-control-message-size 500)
+
 (defn message [replica-version short-id payload]
   {:type message-id :replica-version replica-version :short-id short-id :payload payload})
 

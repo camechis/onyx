@@ -37,6 +37,7 @@
             :short-id (base-decoder/get-dest-id decoder)
             :epoch (heartbeat-decoder/get-epoch hb-dec)
             :session-id (heartbeat-decoder/get-session-id hb-dec)
+            :src-peer-id (heartbeat-decoder/get-src-peer-id hb-dec)
             :dst-peer-id dst-peer-id}
            (messaging-decompress (heartbeat-decoder/get-opts-map-bytes hb-dec)))))
 
@@ -55,10 +56,12 @@
         dst-peer (if (vector? dst-peer-id)
                    (second dst-peer-id)
                    dst-peer-id)]
+    (println "SRC_PEER_ID" (:src-peer-id msg))
     (-> hb-enc
         (heartbeat-encoder/wrap (base-encoder/length enc))
         (heartbeat-encoder/set-epoch (:epoch msg))
         (heartbeat-encoder/set-session-id (:session-id msg))
+        (heartbeat-encoder/set-src-peer-id (:src-peer-id msg))
         (heartbeat-encoder/set-dst-peer-type dst-peer-type)
         (heartbeat-encoder/set-dst-peer-id dst-peer)
         (heartbeat-encoder/set-opts-map-bytes (-> msg
